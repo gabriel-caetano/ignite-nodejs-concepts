@@ -38,7 +38,8 @@ app.post('/users', (request, response) => {
 
 app.get('/todos', checksExistsUserAccount, (request, response) => {
   const { user } = request
-  const { todos } = users.find(u => u.name = user.name)
+
+  const { todos } = users.find(u => u.username === user.username)
   return response.json(todos)
 });
 
@@ -57,7 +58,7 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
   const { user } = request
-  const { todos } = users.find(u => u.name = user.name)
+  const { todos } = users.find(u => u.username === user.username)
   const todo = todos.find(t => t.id === request.params.id)
   if (!todo) {
     return response.status(404).json({ error: 'Todo not found' })
