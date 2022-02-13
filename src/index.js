@@ -14,7 +14,7 @@ const users = [];
 function checksExistsUserAccount(request, response, next) {
   const user = users.find(u => u.username === request.headers.username);
   if (!user) {
-    return response.status(400).json({ error: 'User not found' });
+    return response.status(404).json({ error: 'User not found' });
   }
   request.user = user;
   return next();
@@ -22,6 +22,10 @@ function checksExistsUserAccount(request, response, next) {
 
 app.post('/users', (request, response) => {
   const { name, username } = request.body
+  const userExists = users.some(u => u.username === username);
+  if (userExists) {
+    return response.status(400).json({ error: 'User already exists' });
+  }
   const user = {
     id: uuidv4(),
     name,
@@ -48,7 +52,7 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
     created_at: new Date(),
   }
   user.todos.push(todo)
-  return response.json(todo)
+  return response.status(201).json(todo)
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
@@ -56,7 +60,7 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
   const { todos } = users.find(u => u.name = user.name)
   const todo = todos.find(t => t.id === request.params.id)
   if (!todo) {
-    return response.status(400).json({ error: 'Todo not found' })
+    return response.status(404).json({ error: 'Todo not found' })
   }
   todo.title = request.body.title
   todo.deadline = request.body.deadline
@@ -68,14 +72,21 @@ app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
   const { user } = request
   const todo = user.todos.find(t => t.id === request.params.id)
   if (!todo) {
-    return response.status(400).json({ error: 'Todo not found' })
+    return response.status(404).json({ error: 'Todo not found' })
   }
   todo.done = true
   return response.json(todo)
 });
 
 app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { user } = request
+  const todo = user.todos.find(t => t.id === request.params.id)
+
+  if (!todo) {
+    return response.status(404).json({ error: 'Todo not found' })
+  }
+  user.todos = user.todos.filter(t => t.id !== request.params.id)
+  return response.status(204).send()
 });
 
 module.exports = app;
